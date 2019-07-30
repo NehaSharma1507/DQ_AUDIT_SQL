@@ -1,0 +1,89 @@
+INSERT INTO ADW_DEV.ADW_DQ_AUDIT.DATA_QUALITY_RULE (
+  DQ_RULE_ID
+,RULE_TYPE
+,RULE_OWNER
+,RULE_PURPOSE
+,UPPER_THRESHOLD
+,LOWER_THRESHOLD
+,CALCULATION
+,SEVERITY_BANDING)
+VALUES
+(1
+,'PL FACT DIM REFERENTIAL INTEGRITY'
+,'SALES'
+,'DIM_PRODUCT ITEM_FACT INTEGRITY CHECK'
+,'0'
+,'0'
+,'N/A'
+,'MEDIUM');
+
+SELECT * FROM ADW_DEV.ADW_DQ_AUDIT.DATA_QUALITY_RULE
+
+INSERT INTO ADW_DEV.ADW_DQ_AUDIT.DATA_QUALITY_LOG (
+   target_table_primary_key_val
+  ,target_object
+  ,target_attribute_name
+  ,source_object
+  ,exception_target_load_ts
+  ,exception_severity_level
+  ,dq_rule_id
+  ,dq_log_ts
+  ,dq_log_id
+  ,dq_exception_val 
+  ,business_ts
+  ,business_domain
+)
+SELECT 
+   transaction_element||'|'||transaction_key||'|'||product_key||'|'||date_key
+  ,'PRODUCT_DIM'
+  ,'PRODUCT_KEY'
+  ,'SALES_TRANS_HDR_LINK, SALES_TRANS_PAYMENT_LINK, SALES_TRANS_LINE_LINK, SALES_TRANSACTION_DISCOUNT_LINE_LINK'
+  ,date_key
+  ,3
+  ,1
+  ,TO_TIMESTAMP_NTZ(CURRENT_TIMESTAMP())
+  ,adw_dev.adw_dq_audit.data_quality_log_id.nextval
+  ,product_key
+  ,date_key
+  ,'SALES'   
+FROM 
+  item_fact AS itfa
+WHERE itfa.date_key > CURRENT_DATE() -60
+AND 
+  itfa.product_key IN (
+    SELECT 
+        product_key
+    FROM 
+        item_fact AS itfa1
+    WHERE 
+        itfa1.date_key > CURRENT_DATE() -60
+    GROUP BY 
+        product_key
+MINUS
+    SELECT 
+        product_key
+    FROM 
+        product_dim AS prdi
+    GROUP BY 
+        product_key)
+AND
+    transaction_element||'|'||transaction_key||'|'||product_key||'|'||date_key NOT IN 
+    (
+     SELECT 
+        target_table_primary_key_val 
+     FROM 
+        adw_dev.adw_dq_audit.data_quality_log
+     )
+
+
+SELECT *
+FROM
+   adw_dev.adw_dq_audit.data_quality_log AS dql 
+INNER JOIN adw_dev.adw_dq_audit.data_quality_rule AS dqr ON dqr.dq_rule_id = dql.dq_rule_id
+
+
+SELECT *
+FROM adw_dev.adw_dq_audit.data_quality_action dqa
+WHERE NOT EXISTS (SELECT 1
+                  FROM adw_dev.adw_dq_audit.data_quality_log dql
+                  WHERE dqa.dq_log_id = dql.dq_log_id)
