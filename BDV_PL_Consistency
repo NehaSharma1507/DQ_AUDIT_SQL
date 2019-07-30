@@ -1,0 +1,65 @@
+INSERT INTO ADW_DEV.ADW_DQ_AUDIT.DATA_QUALITY_RULE (
+  DQ_RULE_ID
+,RULE_TYPE
+,RULE_OWNER
+,RULE_PURPOSE
+,UPPER_THRESHOLD
+,LOWER_THRESHOLD
+,CALCULATION
+,SEVERITY_BANDING)
+VALUES
+(2
+,'BDV to PL checksum'
+,'SALES'
+,'FACT_SALES_TRANS_LINE CHECKSUM'
+,'0'
+,'0'
+,'N/A'
+,'MEDIUM');
+
+
+SELECT * FROM ADW_DEV.ADW_DQ_AUDIT.DATA_QUALITY_RULE
+
+
+INSERT INTO ADW_DEV.ADW_DQ_AUDIT.DATA_QUALITY_LOG (
+   target_table_primary_key_val
+  ,target_object
+  ,target_attribute_name
+  ,source_object
+  ,exception_target_load_ts
+  ,exception_severity_level
+ ,dq_rule_id
+  ,dq_log_ts
+  ,dq_log_id
+  ,dq_exception_val 
+  ,business_ts
+  ,business_domain
+)
+SELECT 
+   'STORE_CD|TILL_NUM|TRAN_NUM|TRAN_DT|TRAN_TM|EAN'
+  ,'ADW_PL.FACT_SALES_TRANS_LINE'
+  ,'N/A'
+  ,'ADW_BDV.SALES_TRANS_LINE_BR'
+  ,tran_dt
+  ,3
+  ,2
+  ,TO_TIMESTAMP_NTZ(CURRENT_TIMESTAMP())
+  ,adw_dev.adw_dq_audit.data_quality_log_id.nextval
+  ,store_nk1||'|'||till_nk1||'|'||tran_num||'|'||tran_dt||'|'||tran_tm||'|'||ean_nk1
+  ,tran_dt
+  ,'SALES'   
+FROM 
+   adw_bdv.sales_trans_line_br
+WHERE
+  (store_nk1,till_nk1,tran_num, tran_dt, tran_tm, ean_nk1) IN
+  (
+select store_nk1,till_nk1,tran_num, tran_dt, tran_tm, ean_nk1
+from adw_bdv.sales_trans_line_br
+where tran_dt = CURRENT_DATE()-30
+and duplicate_record_flag = 'N'
+and business_unit_nk1 != 3800
+and tran_void_flag != 'Y'
+and invalid_tran_flag = 'N'
+minus
+select store_cd, till_num,tran_num, tran_dt, tran_tm, ean from adw_pl.fact_sales_trans_line
+where tran_dt = CURRENT_DATE()-30)
