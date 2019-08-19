@@ -1,0 +1,45 @@
+import os
+import glob
+
+data = {'event_name': [],'event_type': [], 'event_id': [] ,'record_id':[],'post_time':[], 'useragent':[]}
+json_dir_name = "//a-filedata-p/Desktop/Adam.Wilkin/Desktop/Slot Booking/"
+
+json_pattern = os.path.join(json_dir_name,'*.json')
+
+file_list = glob.glob(json_pattern)
+
+import pandas as pd
+import json
+
+
+for file in file_list:
+    with open (file) as json_file:
+        doc = json.load(json_file)
+    for i in range (0,len(doc)):
+        for transaction in [doc[i]]:
+            if doc[i].get('visit',{}).get('device',{}).get('user',{}):
+                data['event_name'].append(transaction ['event_name'])
+            else:
+                data[event_name].append('')
+            if doc[i].get('visit',{}).get('device',{}).get('user',{}):
+                data['event_type'].append(transaction ['event_type'])
+            else:
+                data[event_type].append('')
+            if doc[i].get('visit',{}).get('device',{}).get('user',{}):
+                data['event_id'].append(transaction ['event_id'])
+            else:
+                data[event_id].append('')
+            if doc[i].get('visit',{}).get('device',{}).get('user',{}):
+                data['record_id'].append(transaction ['record_id'])
+            else:
+                data[record_id].append('')
+            if doc[i].get('visit',{}).get('device',{}).get('user',{}):
+                data['post_time'].append(transaction ['post_time'])
+            else:
+                data[post_time].append('')
+            if doc[i].get('visit',{}).get('device',{}).get('user',{}):
+                data['useragent'].append(transaction ['visit']['device']['useragent'])
+            else:
+                data[useragent].append('')
+            
+print(data)
