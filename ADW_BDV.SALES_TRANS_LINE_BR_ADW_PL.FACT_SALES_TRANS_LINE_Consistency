@@ -55,11 +55,11 @@ WHERE
   (
 select store_nk1,till_nk1,tran_num, tran_dt, tran_tm, ean_nk1
 from adw_bdv.sales_trans_line_br
-where tran_dt = CURRENT_DATE()-30
+where tran_dt > CURRENT_DATE()-30
 and duplicate_record_flag = 'N'
 and business_unit_nk1 != 3800
 and tran_void_flag != 'Y'
 and invalid_tran_flag = 'N'
 minus
 select store_cd, till_num,tran_num, tran_dt, tran_tm, ean from adw_pl.fact_sales_trans_line
-where tran_dt = CURRENT_DATE()-30)
+where tran_dt > CURRENT_DATE()-30)
