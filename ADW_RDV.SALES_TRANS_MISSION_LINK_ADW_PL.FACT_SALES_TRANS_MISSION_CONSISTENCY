@@ -1,0 +1,40 @@
+INSERT INTO ADW_DEV.ADW_DQ_AUDIT.DATA_QUALITY_LOG (
+   target_table_primary_key_val
+  ,target_object
+  ,target_attribute_name
+  ,source_object
+  ,exception_target_load_ts
+  ,exception_severity_level
+  ,dq_rule_id
+  ,dq_log_ts
+  ,dq_log_id
+  ,dq_exception_val 
+  ,business_ts
+  ,business_domain
+)
+SELECT 
+   'STORE_CD|TILL_NUM|TRAN_NUM|TRAN_DT|TRAN_TM'
+  ,'ADW_PL.FACT_SALES_TRANS_MISSION'
+  ,'N/A'
+  ,'ADW_RDV.SALES_TRANS_MISSION_LINK'
+  ,tran_dt
+  ,3
+  ,2
+  ,TO_TIMESTAMP_NTZ(CURRENT_TIMESTAMP())
+  ,adw_dev.adw_dq_audit.data_quality_log_id.nextval
+  ,STORE_NK1||'|'||TILL_NK1||'|'||TRAN_NUM||'|'||TRAN_DT||'|'||TRAN_TM
+  ,tran_dt
+  ,'SALES'   
+FROM 
+  "ADW_PROD"."ADW_RDV"."SALES_TRANS_MISSION_LINK"
+WHERE
+  ( STORE_NK1,TILL_NK1,TRAN_DT,TRAN_TM,TRAN_NUM) IN
+  ( 
+SELECT STORE_NK1,TILL_NK1,TRAN_DT,TRAN_TM,TRAN_NUM
+FROM "ADW_PROD"."ADW_RDV"."SALES_TRANS_MISSION_LINK"
+WHERE TRAN_DT>current_date()-30
+MINUS
+SELECT STORE_CD,TILL_NUM,TRAN_DT,TRAN_TM,TRAN_NUM
+FROM "ADW_PROD"."ADW_PL"."FACT_SALES_TRANS_MISSION"
+WHERE TRAN_DT>current_date()-30)
+ 
