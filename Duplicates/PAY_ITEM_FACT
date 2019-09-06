@@ -1,0 +1,39 @@
+ INSERT INTO ADW_DEV.ADW_DQ_AUDIT.DATA_QUALITY_LOG (
+   target_table_primary_key_val
+  ,target_object
+  ,target_attribute_name
+  ,source_object
+  ,exception_target_load_ts
+  ,exception_severity_level
+  ,dq_rule_id
+  ,dq_log_ts
+  ,dq_log_id
+  ,dq_exception_val 
+  ,business_ts
+  ,business_domain
+)
+SELECT DISTINCT 
+   'TRANSACTION_KEY|TRANSACTION_ELEMENT'
+  ,'N/A'
+  ,'N/A'
+  ,'INC_PL.PAY_ITEM_FACT'
+  ,DATE_KEY
+  ,3
+  ,2
+  ,TO_TIMESTAMP_NTZ(CURRENT_TIMESTAMP())
+  ,adw_dev.adw_dq_audit.data_quality_log_id.nextval
+  ,TRANSACTION_KEY||'|'||TRANSACTION_ELEMENT
+  ,DATE_KEY
+  ,'SALES'   
+FROM 
+   "ADW_PROD"."INC_PL"."PAY_ITEM_FACT"
+WHERE
+  (TRANSACTION_KEY,TRANSACTION_ELEMENT) IN
+  (
+
+ SELECT TRANSACTION_KEY,TRANSACTION_ELEMENT
+ FROM "ADW_PROD"."INC_PL"."PAY_ITEM_FACT"
+ WHERE DATE_KEY>CURRENT_DATE-30
+ GROUP BY TRANSACTION_KEY,TRANSACTION_ELEMENT
+ HAVING COUNT(*)>1
+ ORDER BY TRANSACTION_KEY DESC)
